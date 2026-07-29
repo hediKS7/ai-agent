@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import ReactMarkdown from "react-markdown";
 
-const API = "/api";
+const API = "";
 
 const AGENTS = [
   { id: "general",  name: "General",      color: "#6366F1", placeholder: "Ask anything..." },

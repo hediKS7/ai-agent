@@ -1,6 +1,8 @@
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from backend.api import auth, chat, tasks, memory, upload, followup
 from backend.core.database import engine
 from backend.models import Base
@@ -28,10 +30,10 @@ app.include_router(memory.router, prefix="/memory", tags=["Memory"])
 app.include_router(upload.router,   prefix="/upload",   tags=["Upload"])
 app.include_router(followup.router, prefix="/followups", tags=["Followups"])
 
-@app.get("/")
-async def root():
-    return {"message": "AI Agent System API", "docs": "/docs", "health": "/health"}
-
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+frontend_dir = os.path.join(os.path.dirname(__file__), "..", "frontend", "out")
+if os.path.isdir(frontend_dir):
+    app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
