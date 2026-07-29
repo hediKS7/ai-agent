@@ -1,0 +1,47 @@
+# Environment variables (contains API keys!)
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.egg
+dist/
+build/
+venv/
+backend/venv/
+.venv/
+
+# Node / Next.js
+node_modules/
+frontend/.next/
+frontend/node_modules/
+frontend/tsconfig.tsbuildinfo
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
+
+# Docker
+docker/postgres-init/*.bak
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Uploads (user generated)
+uploads/
+
+# Zip / archives
+*.zip
+*.tar.gz
+*.7z
