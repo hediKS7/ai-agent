@@ -111,6 +111,12 @@ async def chat(req: ChatRequest):
     if not conversation_id:
         conversation_id = str(uuid.uuid4())
         async with AsyncSessionLocal() as db:
+            result = await db.execute(text("SELECT id FROM users WHERE id = :uid"), {"uid": req.user_id})
+            if not result.scalar_one_or_none():
+                await db.execute(text("""
+                    INSERT INTO users (id, email, username, hashed_password, is_active, created_at)
+                    VALUES (:id, :email, :username, '', TRUE, NOW())
+                """), {"id": req.user_id, "email": f"{req.user_id}@auto.local", "username": req.user_id[:8]})
             await db.execute(text("""
                 INSERT INTO conversations (id, user_id, title, agent_type, created_at, updated_at)
                 VALUES (:id, :user_id, :title, :agent_type, :now, :now)
