@@ -15,10 +15,11 @@ type SidebarProps = {
   onNewConversation: () => void;
   onSelectConversation: (id: string) => void;
   onDeleteConversation: (id: string) => void;
+  onLogout: () => void;
 };
 
 export function Sidebar(props: SidebarProps) {
-  const { open, selectedAgentId, conversations, activeConversationId, dueCount, onClose, onSelectAgent, onNewConversation, onSelectConversation, onDeleteConversation } = props;
+  const { open, selectedAgentId, conversations, activeConversationId, dueCount, onClose, onSelectAgent, onNewConversation, onSelectConversation, onDeleteConversation, onLogout } = props;
   const [query, setQuery] = useState("");
   const filteredConversations = useMemo(() => conversations.filter((conversation) => conversation.title.toLowerCase().includes(query.trim().toLowerCase())), [conversations, query]);
   if (!open) return null;
@@ -52,7 +53,7 @@ export function Sidebar(props: SidebarProps) {
           </div>) : <p className="sidebar__empty">{conversations.length ? "No conversations match your search." : "Your conversations will appear here."}</p>}
         </nav>
       </div>
-      <div className="sidebar__footer"><span className="status-dot" /> All systems operational</div>
+      <div className="sidebar__footer"><span className="status-dot" /> All systems operational<button className="sidebar__logout" onClick={onLogout} aria-label="Sign out">Sign out</button></div>
     </aside>
   );
 }

@@ -12,7 +12,7 @@ import { Sidebar } from "./sidebar";
 const emptyWorkspace = (): AgentWorkspaceState => ({ conversations: [], activeConversationId: null, messages: [] });
 const initialWorkspaces = (): Record<AgentId, AgentWorkspaceState> => ({ general: emptyWorkspace(), bridger: emptyWorkspace(), vibber: emptyWorkspace(), inspirer: emptyWorkspace() });
 
-export function ChatWorkspace({ userId, username }: { userId: string; username: string }) {
+export function ChatWorkspace({ userId, username, onLogout }: { userId: string; username: string; onLogout: () => void }) {
   const [selectedAgentId, setSelectedAgentId] = useState<AgentId>("general");
   const [workspaces, setWorkspaces] = useState<Record<AgentId, AgentWorkspaceState>>(initialWorkspaces);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -96,7 +96,7 @@ export function ChatWorkspace({ userId, username }: { userId: string; username: 
   const totalDue = followups.length + commitments.length;
 
   return <main className="workspace" style={{ "--accent": agent.color } as React.CSSProperties}>
-    <Sidebar open={sidebarOpen} selectedAgentId={selectedAgentId} conversations={workspace.conversations} activeConversationId={workspace.activeConversationId} dueCount={dueCount} onClose={() => setSidebarOpen(false)} onSelectAgent={(id) => { setSelectedAgentId(id); setError(null); }} onNewConversation={newConversation} onSelectConversation={selectConversation} onDeleteConversation={deleteConversation} />
+    <Sidebar open={sidebarOpen} selectedAgentId={selectedAgentId} conversations={workspace.conversations} activeConversationId={workspace.activeConversationId} dueCount={dueCount} onClose={() => setSidebarOpen(false)} onSelectAgent={(id) => { setSelectedAgentId(id); setError(null); }} onNewConversation={newConversation} onSelectConversation={selectConversation} onDeleteConversation={deleteConversation} onLogout={onLogout} />
     <section className="chat-shell">
       <header className="topbar">
         <div className="topbar__left"><button className="icon-button topbar__menu" onClick={() => setSidebarOpen((open) => !open)} aria-label="Toggle sidebar">Menu</button><span className="topbar__agent-dot" /><div><p>{agent.name}</p><span>{agent.descriptor}</span></div></div>

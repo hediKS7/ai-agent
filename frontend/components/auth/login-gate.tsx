@@ -35,7 +35,12 @@ export function LoginGate() {
   };
 
   if (checkingSession) return <main className="auth-loading"><span className="auth-loading__mark" /></main>;
-  if (authenticated) return <ChatWorkspace userId={DEFAULT_USER_ID} username="eya.mkaouar" />;
+  const handleLogout = () => {
+    window.localStorage.removeItem(SESSION_KEY);
+    setAuthenticated(false);
+  };
+
+  if (authenticated) return <ChatWorkspace userId={DEFAULT_USER_ID} username="eya.mkaouar" onLogout={handleLogout} />;
 
   return <main className="auth-page">
     <section className="auth-intro">
