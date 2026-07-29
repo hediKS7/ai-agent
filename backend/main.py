@@ -28,6 +28,10 @@ app.include_router(memory.router, prefix="/memory", tags=["Memory"])
 app.include_router(upload.router,   prefix="/upload",   tags=["Upload"])
 app.include_router(followup.router, prefix="/followups", tags=["Followups"])
 
+@app.get("/")
+async def root():
+    return {"message": "AI Agent System API", "docs": "/docs", "health": "/health"}
+
 @app.get("/health")
 async def health():
     return {"status": "ok"}
