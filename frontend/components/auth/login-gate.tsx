@@ -5,7 +5,7 @@ import { ChatWorkspace } from "@/components/chat/workspace";
 
 const AUTHORIZED_EMAIL = "eya.mkaouar@ept.ucar.tn";
 const AUTHORIZED_PASSWORD = "vistasy2026";
-const SESSION_KEY = "nexus-authenticated";
+const SESSION_KEY = "RICHOUT-authenticated";
 const DEFAULT_USER_ID = process.env.NEXT_PUBLIC_DEMO_USER_ID ?? "988367fd-3496-401a-8c7c-3336a3523079";
 
 export function LoginGate() {
@@ -39,14 +39,14 @@ export function LoginGate() {
 
   return <main className="auth-page">
     <section className="auth-intro">
-      <div className="auth-brand"><span className="brand__mark"><i /><i /><i /></span><strong>nexus</strong></div>
+      <div className="auth-brand"><span className="brand__mark"><i /><i /><i /></span><strong>RICHOUT</strong></div>
       <div className="auth-intro__content">
         <p className="eyebrow">Private workspace</p>
         <h1>A calmer place to think clearly.</h1>
         <p>One focused workspace for your conversations, ideas, and momentum.</p>
       </div>
       <div className="auth-orbit auth-orbit--one" /><div className="auth-orbit auth-orbit--two" />
-      <p className="auth-intro__footer">Nexus intelligence workspace <span /> Private access</p>
+      <p className="auth-intro__footer">RICHOUT intelligence workspace <span /> Private access</p>
     </section>
     <section className="auth-panel">
       <form className="login-card" onSubmit={signIn}>

@@ -26,7 +26,7 @@ export function Sidebar(props: SidebarProps) {
     <aside className="sidebar">
       <div className="brand">
         <span className="brand__mark"><i /><i /><i /></span>
-        <span><strong>nexus</strong><small>intelligence workspace</small></span>
+        <span><strong>RICHOUT</strong><small>intelligence workspace</small></span>
         <button className="sidebar__close" onClick={onClose} aria-label="Close sidebar">Close</button>
       </div>
       <div className="sidebar__scroll">
