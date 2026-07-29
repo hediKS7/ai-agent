@@ -3,7 +3,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 from sqlalchemy import text
 from backend.api import auth, chat, tasks, memory, upload, followup
 from backend.core.database import engine
@@ -16,21 +15,14 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-        # Extensions
+        # ── Extensions ──────────────────────────────────────────────
         await conn.execute(text('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"'))
+        try:
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        except Exception:
+            pass
 
-        # Fix existing tables — add missing columns if tables were created by an older deploy
-        await conn.execute(text("""
-            ALTER TABLE messages ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'
-        """))
-        await conn.execute(text("""
-            ALTER TABLE commitments ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending'
-        """))
-        await conn.execute(text("""
-            ALTER TABLE emotional_history ALTER COLUMN id SET DEFAULT gen_random_uuid()
-        """))
-
-        # Followups
+        # ── CREATE all tables (IF NOT EXISTS so safe to re-run) ────
         await conn.execute(text("""
             CREATE TABLE IF NOT EXISTS followups (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -43,7 +35,6 @@ async def lifespan(app: FastAPI):
                 created_at TIMESTAMPTZ DEFAULT NOW()
             )
         """))
-        # Commitments
         await conn.execute(text("""
             CREATE TABLE IF NOT EXISTS commitments (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -55,14 +46,6 @@ async def lifespan(app: FastAPI):
                 created_at TIMESTAMPTZ DEFAULT NOW()
             )
         """))
-        # Conversations — agent_type & updated_at might be missing on old tables
-        await conn.execute(text("""
-            ALTER TABLE conversations ADD COLUMN IF NOT EXISTS agent_type VARCHAR(50) DEFAULT 'general'
-        """))
-        await conn.execute(text("""
-            ALTER TABLE conversations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()
-        """))
-        # Emotional history
         await conn.execute(text("""
             CREATE TABLE IF NOT EXISTS emotional_history (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -73,7 +56,6 @@ async def lifespan(app: FastAPI):
                 created_at TIMESTAMPTZ DEFAULT NOW()
             )
         """))
-        # Weekly summaries
         await conn.execute(text("""
             CREATE TABLE IF NOT EXISTS weekly_summaries (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -83,7 +65,6 @@ async def lifespan(app: FastAPI):
                 created_at TIMESTAMPTZ DEFAULT NOW()
             )
         """))
-        # Tasks
         await conn.execute(text("""
             CREATE TABLE IF NOT EXISTS tasks (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -98,7 +79,6 @@ async def lifespan(app: FastAPI):
                 updated_at TIMESTAMPTZ DEFAULT NOW()
             )
         """))
-        # Tool calls
         await conn.execute(text("""
             CREATE TABLE IF NOT EXISTS tool_calls (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -112,7 +92,6 @@ async def lifespan(app: FastAPI):
                 created_at TIMESTAMPTZ DEFAULT NOW()
             )
         """))
-        # Agent logs
         await conn.execute(text("""
             CREATE TABLE IF NOT EXISTS agent_logs (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -123,9 +102,7 @@ async def lifespan(app: FastAPI):
                 created_at TIMESTAMPTZ DEFAULT NOW()
             )
         """))
-        # Memories (needs pgvector — graceful if unavailable)
         try:
-            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
             await conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS memories (
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -141,7 +118,24 @@ async def lifespan(app: FastAPI):
                 )
             """))
         except Exception:
-            pass  # pgvector not installed on this PostgreSQL instance
+            pass  # pgvector not installed
+
+        # ── ALTER existing tables (fix columns missing from old deploys) ──
+        await conn.execute(text("""
+            ALTER TABLE messages ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'
+        """))
+        await conn.execute(text("""
+            ALTER TABLE commitments ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending'
+        """))
+        await conn.execute(text("""
+            ALTER TABLE conversations ADD COLUMN IF NOT EXISTS agent_type VARCHAR(50) DEFAULT 'general'
+        """))
+        await conn.execute(text("""
+            ALTER TABLE conversations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()
+        """))
+        await conn.execute(text("""
+            ALTER TABLE emotional_history ALTER COLUMN id SET DEFAULT gen_random_uuid()
+        """))
     yield
 
 app = FastAPI(title="AI Agent System", version="1.0.0", lifespan=lifespan)
