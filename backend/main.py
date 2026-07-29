@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from sqlalchemy import text
 from backend.api import auth, chat, tasks, memory, upload, followup
 from backend.core.database import engine
 from backend.models import Base
@@ -14,6 +15,35 @@ import backend.models.conversation
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS followups (
+                id UUID PRIMARY KEY,
+                user_id UUID NOT NULL,
+                agent_type VARCHAR(50) NOT NULL,
+                followup_type VARCHAR(50) NOT NULL,
+                context JSONB DEFAULT '{}',
+                due_at TIMESTAMPTZ NOT NULL,
+                triggered BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """))
+        await conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS commitments (
+                id UUID PRIMARY KEY,
+                user_id UUID NOT NULL,
+                description TEXT NOT NULL,
+                deadline TIMESTAMPTZ NOT NULL,
+                resolved BOOLEAN DEFAULT FALSE,
+                source_conversation_id UUID,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """))
+        await conn.execute(text("""
+            ALTER TABLE conversations ADD COLUMN IF NOT EXISTS agent_type VARCHAR(50) DEFAULT 'general'
+        """))
+        await conn.execute(text("""
+            ALTER TABLE conversations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()
+        """))
     yield
 
 app = FastAPI(title="AI Agent System", version="1.0.0", lifespan=lifespan)
