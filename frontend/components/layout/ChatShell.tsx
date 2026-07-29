@@ -3,7 +3,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import type { Message, Followup, Commitment } from "@/types";
 import { AGENTS, emptyAgentState } from "@/types";
 import type { AgentState } from "@/types";
-import { fetchConversations, fetchMessages, fetchFollowups, sendMessage, deleteConversation, uploadFile, dismissFollowup, resolveCommitment } from "@/lib/api";
+import { fetchConversations, fetchMessages, fetchFollowups, deleteConversation, uploadFile, dismissFollowup, resolveCommitment } from "@/lib/api";
+import { useChatStream } from "@/lib/useChatStream";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import ChatMessages from "@/components/chat/ChatMessages";
@@ -22,6 +23,7 @@ export default function ChatShell({ userId, username }: Props) {
   });
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [streamingText, setStreamingText] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [ttsEnabled, setTtsEnabled] = useState(false);
   const [speaking, setSpeaking] = useState(false);
@@ -31,7 +33,9 @@ export default function ChatShell({ userId, username }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedCode, setUploadedCode] = useState<string | null>(null);
   const [uploadedFilename, setUploadedFilename] = useState<string | null>(null);
+  const streamingTextRef = useRef("");
 
+  const { stream, stop } = useChatStream();
   const selectedAgent = AGENTS.find(a => a.id === selectedAgentId)!;
   const agentState = agentStates[selectedAgentId];
 
@@ -70,7 +74,9 @@ export default function ChatShell({ userId, username }: Props) {
   };
 
   const handleNewConversation = () => {
+    stop();
     updateAgentState(selectedAgentId, { messages: [], activeConvId: null });
+    setStreamingText("");
     setInput("");
   };
 
@@ -115,33 +121,55 @@ export default function ChatShell({ userId, username }: Props) {
 
   const handleSend = async () => {
     if (!input.trim() || loading) return;
+
     const userMsg: Message = { role: "user", content: input };
     const cur = agentStates[selectedAgentId];
     const updatedMessages = [...cur.messages, userMsg];
     updateAgentState(selectedAgentId, { messages: updatedMessages, activeConvId: cur.activeConvId });
     setInput("");
     setLoading(true);
-    try {
-      const res = await sendMessage({
-        message: userMsg.content, user_id: userId, agent_type: selectedAgentId,
-        conversation_id: cur.activeConvId || undefined, code_context: uploadedCode || undefined,
-      });
-      const assistantMsg: Message = { role: "assistant", content: res.response || "No response." };
-      if (selectedAgentId === "bridger" && ttsEnabled)
-        setTimeout(() => speak(res.response || ""), 300);
-      const newId = res.conversation_id || cur.activeConvId;
-      updateAgentState(selectedAgentId, {
-        messages: [...updatedMessages, assistantMsg],
-        activeConvId: newId || null,
-      });
-      fetchConversations(userId, selectedAgentId).then(conversations => {
-        updateAgentState(selectedAgentId, { conversations });
-      });
-    } catch {
-      updateAgentState(selectedAgentId, {
-        messages: [...updatedMessages, { role: "assistant", content: "Connection error. Check that the backend is running." }],
-      });
-    } finally { setLoading(false); setUploadedCode(null); setUploadedFilename(null); }
+    setStreamingText("");
+
+    streamingTextRef.current = "";
+
+    stream({
+      message: userMsg.content, user_id: userId, agent_type: selectedAgentId,
+      conversation_id: cur.activeConvId || undefined, code_context: uploadedCode || undefined,
+    }, {
+      onToken: (token) => {
+        streamingTextRef.current = token;
+        setStreamingText(token);
+      },
+      onDone: (convId) => {
+        const finalText = streamingTextRef.current;
+        setLoading(false);
+        setUploadedCode(null);
+        setUploadedFilename(null);
+
+        setAgentStates(prev => {
+          const cur = prev[selectedAgentId];
+          const assistantMsg: Message = { role: "assistant", content: finalText };
+          return { ...prev, [selectedAgentId]: { ...cur, messages: [...cur.messages, assistantMsg], activeConvId: convId || cur.activeConvId } };
+        });
+        setStreamingText("");
+
+        if (selectedAgentId === "bridger" && ttsEnabled && finalText) {
+          setTimeout(() => speak(finalText), 300);
+        }
+
+        fetchConversations(userId, selectedAgentId).then(conversations => {
+          updateAgentState(selectedAgentId, { conversations });
+        });
+      },
+      onError: (error) => {
+        setLoading(false);
+        setStreamingText("");
+        setAgentStates(prev => {
+          const cur = prev[selectedAgentId];
+          return { ...prev, [selectedAgentId]: { ...cur, messages: [...cur.messages, { role: "assistant" as const, content: `Error: ${error}` }] } };
+        });
+      },
+    });
   };
 
   const handleDismissFollowup = async (id: string) => {
@@ -159,6 +187,11 @@ export default function ChatShell({ userId, username }: Props) {
     followupCounts[agent.id] = followups.filter(f => f.agent_type === agent.id).length;
   }
   followupCounts.inspirer = (followupCounts.inspirer || 0) + commitments.length;
+
+  // Build displayed messages: existing messages + streaming placeholder
+  const displayedMessages = streamingText
+    ? [...agentState.messages, { role: "assistant" as const, content: streamingText }]
+    : agentState.messages;
 
   return (
     <div className="flex h-screen overflow-hidden bg-gradient-radial">
@@ -204,7 +237,7 @@ export default function ChatShell({ userId, username }: Props) {
 
         <div className="flex-1 flex overflow-hidden">
           <main className="flex-1 flex flex-col overflow-hidden">
-            <ChatMessages messages={agentState.messages} loading={loading} agent={selectedAgent} />
+            <ChatMessages messages={displayedMessages} loading={loading && !streamingText} agent={selectedAgent} />
             <ChatInput
               input={input}
               setInput={setInput}
