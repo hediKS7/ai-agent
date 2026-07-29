@@ -228,7 +228,8 @@ function ChatPage({ userId, username }: {
     if (!input.trim() || loading) return;
     const userMsg: Message = { role: "user", content: input };
     const cur = agentStates[selectedAgentId];
-    updateAgentState(selectedAgentId, { messages: [...cur.messages, userMsg] });
+    const updatedMessages = [...cur.messages, userMsg];
+    updateAgentState(selectedAgentId, { messages: updatedMessages, activeConvId: cur.activeConvId });
     setInput("");
     setLoading(true);
     try {
@@ -241,13 +242,13 @@ function ChatPage({ userId, username }: {
         setTimeout(() => speak(res.data.response || ""), 300);
       const newId = res.data.conversation_id || cur.activeConvId;
       updateAgentState(selectedAgentId, {
-        messages: [...agentStates[selectedAgentId].messages, assistantMsg],
+        messages: [...updatedMessages, assistantMsg],
         activeConvId: newId || null,
       });
       await loadConversations(selectedAgentId);
     } catch {
       updateAgentState(selectedAgentId, {
-        messages: [...agentStates[selectedAgentId].messages,
+        messages: [...updatedMessages,
           { role: "assistant", content: "Connection error. Check that the backend is running." }]
       });
     } finally { setLoading(false); setUploadedCode(null); setUploadedFilename(null); }
