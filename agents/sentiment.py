@@ -70,7 +70,7 @@ async def get_emotional_pattern(user_id: str, days: int = 7) -> dict:
                 SELECT emotion, AVG(intensity) as avg_intensity, COUNT(*) as count
                 FROM emotional_history
                 WHERE user_id = :user_id
-                AND created_at > NOW() - INTERVAL ':days days'
+                AND created_at > NOW() - make_interval(days => :days)
                 GROUP BY emotion
                 ORDER BY count DESC
                 LIMIT 5
