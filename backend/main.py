@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI):
                 user_id UUID NOT NULL,
                 description TEXT NOT NULL,
                 deadline TIMESTAMPTZ NOT NULL,
-                resolved BOOLEAN DEFAULT FALSE,
+                status VARCHAR(20) DEFAULT 'pending',
                 source_conversation_id UUID,
                 created_at TIMESTAMPTZ DEFAULT NOW()
             )
@@ -43,6 +43,25 @@ async def lifespan(app: FastAPI):
         """))
         await conn.execute(text("""
             ALTER TABLE conversations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()
+        """))
+        await conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS emotional_history (
+                id UUID PRIMARY KEY,
+                user_id UUID NOT NULL,
+                emotion VARCHAR(50) NOT NULL,
+                intensity FLOAT DEFAULT 0.5,
+                note TEXT,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """))
+        await conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS weekly_summaries (
+                id UUID PRIMARY KEY,
+                user_id UUID NOT NULL,
+                summary_text TEXT NOT NULL,
+                week_start DATE,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
         """))
     yield
 
