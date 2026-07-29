@@ -4,7 +4,7 @@ import { useCallback, useRef } from "react";
 const API = "";
 
 type StreamCallbacks = {
-  onToken: (token: string) => void;
+  onToken: (token: string, conversationId?: string) => void;
   onDone: (conversationId: string) => void;
   onError: (error: string) => void;
 };
@@ -61,7 +61,7 @@ export function useChatStream() {
             try {
               const data = JSON.parse(line.slice(6));
               if (data.token) {
-                callbacks.onToken(data.token);
+                callbacks.onToken(data.token, data.conversation_id);
               }
               if (data.done) {
                 callbacks.onDone(data.conversation_id || "");

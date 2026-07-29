@@ -141,3 +141,44 @@ body {
   animation: shimmer 1.5s infinite;
   margin-bottom: 8px;
 }
+
+/* ── Mobile responsive ──────────────────────────── */
+
+@media (max-width: 767px) {
+  .glass-sidebar {
+    width: 100vw;
+    max-width: 260px;
+    border-right: 1px solid rgba(39, 39, 42, 0.5);
+  }
+  .animate-fade-slide-up {
+    animation-duration: 0.2s;
+  }
+}
+
+/* ── Toast animations ───────────────────────────── */
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-16px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toastOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(-16px) scale(0.96); }
+}
+.animate-toast-in  { animation: toastIn 0.25s ease-out both; }
+.animate-toast-out { animation: toastOut 0.2s ease-in both; }
+
+/* ── Drag-drop overlay ──────────────────────────── */
+
+.drop-zone-active {
+  outline: 2px dashed #6366F1;
+  outline-offset: -2px;
+  background: rgba(99, 102, 241, 0.04);
+}
+
+/* ── Ensure code blocks don't overflow on mobile ── */
+
+pre, code {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
