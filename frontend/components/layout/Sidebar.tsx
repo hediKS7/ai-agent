@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { AGENTS } from "@/types";
-import type { AgentState } from "@/types";
+import type { AgentState, Agent as AgentType } from "@/types";
 
 type Props = {
   selectedAgentId: string;
@@ -12,8 +12,6 @@ type Props = {
   onDeleteConversation: (convId: string, e: React.MouseEvent) => void;
   username: string;
   followupCounts: Record<string, number>;
-  mobileOpen: boolean;
-  onMobileClose: () => void;
 };
 
 function formatDate(iso: string) {
@@ -23,7 +21,6 @@ function formatDate(iso: string) {
 export default function Sidebar({
   selectedAgentId, onSelectAgent, agentStates, onSelectConversation,
   onNewConversation, onDeleteConversation, username, followupCounts,
-  mobileOpen, onMobileClose,
 }: Props) {
   const [search, setSearch] = useState("");
   const agentState = agentStates[selectedAgentId];
@@ -32,19 +29,8 @@ export default function Sidebar({
     c.title.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Close on Escape
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onMobileClose();
-    };
-    if (mobileOpen) {
-      document.addEventListener("keydown", handler);
-      return () => document.removeEventListener("keydown", handler);
-    }
-  }, [mobileOpen, onMobileClose]);
-
-  const content = (
-    <aside className="w-56 shrink-0 flex flex-col glass-sidebar z-10 h-full">
+  return (
+    <aside className="w-56 shrink-0 flex flex-col glass-sidebar z-10">
       <div className="px-4 py-4 border-b border-[#27272a]/50 flex items-center gap-3">
         <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#6366F1] to-[#8B5CF6]" />
         <div>
@@ -134,20 +120,5 @@ export default function Sidebar({
         ))}
       </div>
     </aside>
-  );
-
-  return (
-    <>
-      {/* Desktop sidebar */}
-      <div className="hidden md:flex">{content}</div>
-
-      {/* Mobile overlay */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onMobileClose} />
-          <div className="absolute left-0 top-0 h-full animate-fade-slide-up">{content}</div>
-        </div>
-      )}
-    </>
   );
 }
