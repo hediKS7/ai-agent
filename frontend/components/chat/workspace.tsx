@@ -22,8 +22,10 @@ export function ChatWorkspace({ userId, username, onLogout }: { userId: string; 
   const [followups, setFollowups] = useState<Followup[]>([]);
   const [commitments, setCommitments] = useState<Commitment[]>([]);
   const [remindersOpen, setRemindersOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [ttsEnabled, setTtsEnabled] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const workspace = workspaces[selectedAgentId];
   const agent = getAgent(selectedAgentId);
 
@@ -49,6 +51,7 @@ export function ChatWorkspace({ userId, username, onLogout }: { userId: string; 
     return () => { window.clearTimeout(initialRefresh); window.clearInterval(timer); };
   }, [refreshDueItems]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [workspace.messages, loading]);
+  useEffect(() => { if (!userMenuOpen) return; const handler = (event: MouseEvent) => { if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) setUserMenuOpen(false); }; window.setTimeout(() => document.addEventListener("click", handler), 0); return () => document.removeEventListener("click", handler); }, [userMenuOpen]);
 
   const selectConversation = async (conversationId: string) => {
     try { patchWorkspace(selectedAgentId, { activeConversationId: conversationId, messages: await api.messages(userId, conversationId) }); setError(null); }
@@ -109,11 +112,11 @@ export function ChatWorkspace({ userId, username, onLogout }: { userId: string; 
       <div className="topbar__actions">
         {selectedAgentId === "bridger" && <button className={"voice-toggle " + (ttsEnabled ? "voice-toggle--on" : "")} onClick={() => setTtsEnabled((enabled) => !enabled)}>{ttsEnabled ? "Voice on" : "Voice off"}</button>}
         <div className="reminders-anchor"><button className="reminder-button" onClick={() => setRemindersOpen((open) => !open)}>Focus {totalDue > 0 && <b>{totalDue}</b>}</button>{remindersOpen && <FollowupPopover followups={followups} commitments={commitments} onClose={() => setRemindersOpen(false)} onDismiss={(id) => { void api.dismissFollowup(id); setFollowups((items) => items.filter((item) => item.id !== id)); }} onResolve={(id) => { void api.resolveCommitment(id); setCommitments((items) => items.filter((item) => item.id !== id)); }} />}</div>
-        <div className="user-chip" title={username}>{username.slice(0, 1).toUpperCase()}</div>
+        <div className="user-anchor" ref={userMenuRef}><button className="user-chip" onClick={() => setUserMenuOpen((prev) => !prev)} title={username} aria-label="User menu">{username.slice(0, 1).toUpperCase()}</button>{userMenuOpen && <div className="user-menu"><div className="user-menu__header"><strong>{username}</strong></div><button className="user-menu__item" onClick={() => setUserMenuOpen(false)}>Profile settings</button><button className="user-menu__item user-menu__item--danger" onClick={() => { setUserMenuOpen(false); onLogout(); }}>Sign out</button></div>}</div>
       </div>
     </header>
     <div className="workspace__body">
-      <Sidebar open={sidebarOpen} selectedAgentId={selectedAgentId} conversations={workspace.conversations} activeConversationId={workspace.activeConversationId} dueCount={dueCount} onToggle={() => setSidebarOpen((prev) => !prev)} onSelectAgent={(id) => { setSelectedAgentId(id); setError(null); }} onNewConversation={newConversation} onSelectConversation={selectConversation} onDeleteConversation={deleteConversation} onLogout={onLogout} />
+      <Sidebar open={sidebarOpen} selectedAgentId={selectedAgentId} conversations={workspace.conversations} activeConversationId={workspace.activeConversationId} dueCount={dueCount} onToggle={() => setSidebarOpen((prev) => !prev)} onSelectAgent={(id) => { setSelectedAgentId(id); setError(null); }} onNewConversation={newConversation} onSelectConversation={selectConversation} onDeleteConversation={deleteConversation} />
       {body}
     </div>
   </main>;
