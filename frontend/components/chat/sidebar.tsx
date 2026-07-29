@@ -22,9 +22,8 @@ export function Sidebar(props: SidebarProps) {
   const { open, selectedAgentId, conversations, activeConversationId, dueCount, onClose, onSelectAgent, onNewConversation, onSelectConversation, onDeleteConversation, onLogout } = props;
   const [query, setQuery] = useState("");
   const filteredConversations = useMemo(() => conversations.filter((conversation) => conversation.title.toLowerCase().includes(query.trim().toLowerCase())), [conversations, query]);
-  if (!open) return null;
   return (
-    <aside className="sidebar">
+    <aside className={"sidebar" + (open ? " sidebar--open" : " sidebar--closed")}>
       <div className="brand">
         <span className="brand__mark"><i /><i /><i /></span>
         <span><strong>RICHOUT</strong><small>intelligence workspace</small></span>
