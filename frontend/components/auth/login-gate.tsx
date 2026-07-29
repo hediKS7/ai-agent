@@ -59,7 +59,7 @@ export function LoginGate() {
         <label>Email address<input autoComplete="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required /></label>
         <label>Password<input autoComplete="current-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" required /></label>
         {error && <p className="login-error" role="alert"><span>!</span>{error}</p>}
-        <button className="login-button" type="submit">Enter Nexus <span>&rarr;</span></button>
+        <button className="login-button" type="submit">Enter RICHOUT <span>&rarr;</span></button>
         <p className="login-card__help">This workspace is restricted to authorized access.</p>
       </form>
     </section>
