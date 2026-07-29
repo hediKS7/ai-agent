@@ -120,6 +120,55 @@ async def lifespan(app: FastAPI):
         except Exception:
             pass  # pgvector not installed
 
+        # ── Memory subsystem tables (from memory/vector/store.py) ──────
+        await conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS user_profiles (
+                user_id UUID PRIMARY KEY,
+                profile JSONB NOT NULL DEFAULT '{}',
+                updated_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """))
+        await conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS consolidation_log (
+                user_id UUID PRIMARY KEY,
+                chats_since_last INTEGER DEFAULT 0,
+                last_consolidated TIMESTAMPTZ,
+                summary TEXT
+            )
+        """))
+        try:
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS episodic_memories (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    user_id UUID NOT NULL,
+                    content TEXT NOT NULL,
+                    embedding vector(1024),
+                    event_type VARCHAR(50) DEFAULT 'chat',
+                    created_at TIMESTAMPTZ DEFAULT NOW()
+                )
+            """))
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS semantic_memories (
+                    id UUID PRIMARY KEY,
+                    user_id UUID NOT NULL,
+                    content TEXT NOT NULL,
+                    embedding vector(1024),
+                    category VARCHAR(50) DEFAULT 'fact',
+                    version INTEGER DEFAULT 1,
+                    is_active BOOLEAN DEFAULT TRUE,
+                    importance_score FLOAT DEFAULT 0.5,
+                    frequency INTEGER DEFAULT 0,
+                    last_accessed TIMESTAMPTZ,
+                    superseded_by UUID,
+                    content_tsv tsvector,
+                    archived BOOLEAN DEFAULT FALSE,
+                    created_at TIMESTAMPTZ DEFAULT NOW(),
+                    updated_at TIMESTAMPTZ DEFAULT NOW()
+                )
+            """))
+        except Exception:
+            pass  # pgvector not installed — memories/semantic/episodic tables unavailable
+
         # ── ALTER existing tables (fix columns missing from old deploys) ──
         await conn.execute(text("""
             ALTER TABLE messages ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'
