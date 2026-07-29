@@ -7,6 +7,8 @@ from fastapi.responses import FileResponse
 from backend.api import auth, chat, tasks, memory, upload, followup
 from backend.core.database import engine
 from backend.models import Base
+import backend.models.user
+import backend.models.conversation
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
