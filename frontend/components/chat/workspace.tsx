@@ -95,22 +95,26 @@ export function ChatWorkspace({ userId, username, onLogout }: { userId: string; 
   const dueCount = useMemo(() => (agentId: AgentId) => followups.filter((item) => item.agent_type === agentId).length + (agentId === "inspirer" ? commitments.length : 0), [commitments.length, followups]);
   const totalDue = followups.length + commitments.length;
 
+  const body = <section className="chat-shell">
+    <div className="conversation-pane">
+      {workspace.messages.length === 0 && !loading ? <section className="welcome"><span className="welcome__orb" /><p className="eyebrow">{agent.name} space</p><h1>{agent.descriptor}</h1><p>Start with a question, a rough thought, or a piece of code. This conversation will stay in its own focused space.</p><div className="prompt-chips">{["Help me think this through", "Give me a clear next step", "What should I explore?"].map((prompt) => <button key={prompt} onClick={() => void send(prompt)}>{prompt}<span>&rarr;</span></button>)}</div></section> : <div className="messages">{workspace.messages.map((message, index) => <MessageBubble key={message.role + "-" + index + "-" + message.content.slice(0, 12)} message={message} agent={agent} onCopy={(content) => void copy(content)} />)}{loading && <div className="thinking"><span /><span /><span /> {agent.name} is thinking</div>}<div ref={bottomRef} /></div>}
+    </div>
+    {error && <div className="error-banner" role="status"><span>!</span>{error}<button onClick={() => setError(null)} aria-label="Dismiss error">&times;</button></div>}
+    <Composer placeholder={agent.placeholder} accent={agent.color} disabled={loading} attachment={attachment} onAttach={attachFile} onRemoveAttachment={() => setAttachment(null)} onSend={(message) => void send(message)} />
+  </section>;
+
   return <main className="workspace" style={{ "--accent": agent.color } as React.CSSProperties}>
-    <Sidebar open={sidebarOpen} selectedAgentId={selectedAgentId} conversations={workspace.conversations} activeConversationId={workspace.activeConversationId} dueCount={dueCount} onToggle={() => setSidebarOpen((prev) => !prev)} onSelectAgent={(id) => { setSelectedAgentId(id); setError(null); }} onNewConversation={newConversation} onSelectConversation={selectConversation} onDeleteConversation={deleteConversation} onLogout={onLogout} />
-    <section className="chat-shell">
-      <header className="topbar">
-        <div className="topbar__left"><button className="topbar__brand" onClick={() => setSidebarOpen((prev) => !prev)} aria-label="Toggle sidebar"><span className="brand__mark"><i /><i /><i /></span><strong>RICHOUT</strong></button><span className="topbar__agent-dot" /><div><p>{agent.name}</p><span>{agent.descriptor}</span></div></div>
-        <div className="topbar__actions">
-          {selectedAgentId === "bridger" && <button className={"voice-toggle " + (ttsEnabled ? "voice-toggle--on" : "")} onClick={() => setTtsEnabled((enabled) => !enabled)}>{ttsEnabled ? "Voice on" : "Voice off"}</button>}
-          <div className="reminders-anchor"><button className="reminder-button" onClick={() => setRemindersOpen((open) => !open)}>Focus {totalDue > 0 && <b>{totalDue}</b>}</button>{remindersOpen && <FollowupPopover followups={followups} commitments={commitments} onClose={() => setRemindersOpen(false)} onDismiss={(id) => { void api.dismissFollowup(id); setFollowups((items) => items.filter((item) => item.id !== id)); }} onResolve={(id) => { void api.resolveCommitment(id); setCommitments((items) => items.filter((item) => item.id !== id)); }} />}</div>
-          <div className="user-chip" title={username}>{username.slice(0, 1).toUpperCase()}</div>
-        </div>
-      </header>
-      <div className="conversation-pane">
-        {workspace.messages.length === 0 && !loading ? <section className="welcome"><span className="welcome__orb" /><p className="eyebrow">{agent.name} space</p><h1>{agent.descriptor}</h1><p>Start with a question, a rough thought, or a piece of code. This conversation will stay in its own focused space.</p><div className="prompt-chips">{["Help me think this through", "Give me a clear next step", "What should I explore?"].map((prompt) => <button key={prompt} onClick={() => void send(prompt)}>{prompt}<span>&rarr;</span></button>)}</div></section> : <div className="messages">{workspace.messages.map((message, index) => <MessageBubble key={message.role + "-" + index + "-" + message.content.slice(0, 12)} message={message} agent={agent} onCopy={(content) => void copy(content)} />)}{loading && <div className="thinking"><span /><span /><span /> {agent.name} is thinking</div>}<div ref={bottomRef} /></div>}
+    <header className="topbar">
+      <div className="topbar__left"><button className="topbar__brand" onClick={() => setSidebarOpen((prev) => !prev)} aria-label="Toggle sidebar"><span className="brand__mark"><i /><i /><i /></span><strong>RICHOUT</strong></button><span className="topbar__agent-dot" /><div><p>{agent.name}</p><span>{agent.descriptor}</span></div></div>
+      <div className="topbar__actions">
+        {selectedAgentId === "bridger" && <button className={"voice-toggle " + (ttsEnabled ? "voice-toggle--on" : "")} onClick={() => setTtsEnabled((enabled) => !enabled)}>{ttsEnabled ? "Voice on" : "Voice off"}</button>}
+        <div className="reminders-anchor"><button className="reminder-button" onClick={() => setRemindersOpen((open) => !open)}>Focus {totalDue > 0 && <b>{totalDue}</b>}</button>{remindersOpen && <FollowupPopover followups={followups} commitments={commitments} onClose={() => setRemindersOpen(false)} onDismiss={(id) => { void api.dismissFollowup(id); setFollowups((items) => items.filter((item) => item.id !== id)); }} onResolve={(id) => { void api.resolveCommitment(id); setCommitments((items) => items.filter((item) => item.id !== id)); }} />}</div>
+        <div className="user-chip" title={username}>{username.slice(0, 1).toUpperCase()}</div>
       </div>
-      {error && <div className="error-banner" role="status"><span>!</span>{error}<button onClick={() => setError(null)} aria-label="Dismiss error">&times;</button></div>}
-      <Composer placeholder={agent.placeholder} accent={agent.color} disabled={loading} attachment={attachment} onAttach={attachFile} onRemoveAttachment={() => setAttachment(null)} onSend={(message) => void send(message)} />
-    </section>
+    </header>
+    <div className="workspace__body">
+      <Sidebar open={sidebarOpen} selectedAgentId={selectedAgentId} conversations={workspace.conversations} activeConversationId={workspace.activeConversationId} dueCount={dueCount} onToggle={() => setSidebarOpen((prev) => !prev)} onSelectAgent={(id) => { setSelectedAgentId(id); setError(null); }} onNewConversation={newConversation} onSelectConversation={selectConversation} onDeleteConversation={deleteConversation} onLogout={onLogout} />
+      {body}
+    </div>
   </main>;
 }
