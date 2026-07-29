@@ -1,8 +1,17 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.api import auth, chat, tasks, memory, upload, followup
+from backend.core.database import engine
+from backend.models import Base
 
-app = FastAPI(title="AI Agent System", version="1.0.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+
+app = FastAPI(title="AI Agent System", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
