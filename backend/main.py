@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from backend.api import auth, chat, tasks, memory, upload, followup
 from backend.core.database import engine
 from backend.models import Base
@@ -35,5 +36,13 @@ async def health():
     return {"status": "ok"}
 
 frontend_dir = os.path.join(os.path.dirname(__file__), "..", "frontend", "out")
-if os.path.isdir(frontend_dir):
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+logger.info("Frontend dir: %s, exists: %s", frontend_dir, os.path.isdir(frontend_dir))
+index_path = os.path.join(frontend_dir, "index.html")
+if os.path.isfile(index_path):
+    logger.info("Serving frontend from %s", frontend_dir)
     app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
+else:
+    logger.warning("Frontend build not found at %s", index_path)
