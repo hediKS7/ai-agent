@@ -1,53 +1,14 @@
 """
-Shared sentiment/emotion detection layer.
-Runs on every incoming message before response generation.
-Feeds emotional state into all agents' response prompts.
+Shared sentiment/emotion handling layer.
+
+Emotion detection itself now lives in ``agents.nlp.sentiment.analyze_sentiment``
+(rule-based, no LLM). This module handles the stateful side:
+persisting emotional state, computing weekly/sustained patterns, building the
+prompt-injected sentiment context, and enforcing response length.
 """
-from agents.llm import get_llm
 from backend.core.database import AsyncSessionLocal
 from sqlalchemy import text
-import json
 
-SENTIMENT_PROMPT = """Analyze the emotional state of this message in one pass.
-
-Message: "{message}"
-
-Return ONLY valid JSON:
-{{
-  "emotion": "stressed|anxious|excited|sad|neutral|frustrated|hopeful|burned_out|confused|energized",
-  "intensity": 0.0,
-  "signals": ["signal1", "signal2"],
-  "pacing_needed": "slow|normal|fast",
-  "response_length": "very_short|short|medium",
-  "note": "one-line observation about what the user actually needs right now"
-}}
-
-Signals are things like: short message, punctuation, word choice, urgency, fragmentation.
-Intensity is 0.0 (barely present) to 1.0 (overwhelming).
-Return ONLY the JSON."""
-
-async def detect_sentiment(message: str) -> dict:
-    """Detect emotional state from a single message."""
-    try:
-        llm = get_llm()
-        result = await llm.ainvoke(SENTIMENT_PROMPT.format(message=message[:300]))
-        text = result.content.strip()
-        start = text.find("{")
-        end = text.rfind("}") + 1
-        if start >= 0 and end > start:
-            data = json.loads(text[start:end])
-            print(f"[sentiment] {data.get('emotion')} (intensity: {data.get('intensity')}) — {data.get('note')}")
-            return data
-    except Exception as e:
-        print(f"[sentiment] Detection failed: {e}")
-    return {
-        "emotion": "neutral",
-        "intensity": 0.5,
-        "signals": [],
-        "pacing_needed": "normal",
-        "response_length": "medium",
-        "note": ""
-    }
 
 async def save_emotional_state(user_id: str, emotion: str, intensity: float, note: str):
     """Track emotional state over time per user."""

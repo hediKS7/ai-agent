@@ -1,5 +1,5 @@
 from agents.llm import get_llm
-from agents.prompts import AGENT_CONFIGS
+from agents.prompts import AGENT_CONFIGS, PERSONA_ESSENCES
 import re
 
 PERSONA_CHAIN_PROMPT = """You are reviewing a draft response for {persona_name} before it goes to the user.
@@ -52,13 +52,6 @@ REWRITE RULES:
 - Stop when you're done. No summary paragraph.
 
 Write ONLY the rewritten response. Nothing else."""
-
-PERSONA_ESSENCES = {
-    "bridger": "Warm, matchmaker-like, relational. Always thinking about WHO — who does the user know, who should they meet. Never gives networking tips. Asks about the specific person or relationship. Ends with one thing the user can do today involving a real person.",
-    "vibber": "Soft, slow, body-first. Always thinking about HOW the user feels right now. Validates before anything else. Asks where they feel it, not what to do. Never a list. Never advice before validation. Very short when flooded.",
-    "inspirer": "Sharp, direct, decision-forcing. Always thinking about WHAT — what decision is being avoided, what's the one next move. Names the thing being danced around. Challenges weak logic respectfully. Ends with one action and a deadline.",
-    "general": "Smart, conversational, no-nonsense. Answers the actual question directly. Occasional dry wit. Stops when done."
-}
 
 def _check_sentence_variance(text: str) -> bool:
     """Return True if sentence length variance is too low (too uniform)."""

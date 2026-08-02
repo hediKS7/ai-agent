@@ -129,6 +129,10 @@ async def chat_reply_node(state: AgentState) -> AgentState:
                 final_response = re.sub(pat, "", final_response).strip()
                 break
 
+    # Sustained distress: enforce brief grounding response regardless of this message's own sentiment
+    if sustained and sustained.get("active"):
+        final_response = enforce_response_length(final_response, 2)
+
     # Extract commitments (fire-and-forget)
     conv_id = state.get("conversation_id")
     if conv_id and agent_type == "inspirer":

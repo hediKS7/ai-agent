@@ -1,4 +1,5 @@
-from agents.sentiment import detect_sentiment, save_emotional_state, get_emotional_pattern, get_sustained_pattern, build_sentiment_context
+from agents.nlp.sentiment import analyze_sentiment
+from agents.sentiment import save_emotional_state, get_emotional_pattern, get_sustained_pattern, build_sentiment_context
 from agents.state import AgentState
 
 async def sentiment_node(state: AgentState) -> AgentState:
@@ -9,7 +10,7 @@ async def sentiment_node(state: AgentState) -> AgentState:
     message = state["messages"][-1].content
     user_id = state["user_id"]
 
-    sentiment = await detect_sentiment(message)
+    sentiment = analyze_sentiment(message)
     pattern = await get_emotional_pattern(user_id, days=7)
     sustained = await get_sustained_pattern(user_id, lookback=5)
 

@@ -92,3 +92,7 @@ zipp==4.1.0
 zstandard==0.25.0
 ddgs
 python-multipart
+vaderSentiment==3.3.2
+# Optional sentiment backend (SENTIMENT_BACKEND=transformers):
+# transformers
+# torch

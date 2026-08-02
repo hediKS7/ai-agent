@@ -54,6 +54,7 @@ async def task_response_node(state: AgentState) -> AgentState:
         import re
         for pat in [r"(?i)you should\b", r"(?i)try\b", r"(?i)have you considered\b"]:
             final_response = re.sub(pat, "", final_response).strip()
+        final_response = enforce_response_length(final_response, 2)
 
     # Extract commitments if Inspirer
     conv_id = state.get("conversation_id")
